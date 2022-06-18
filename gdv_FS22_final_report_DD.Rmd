@@ -1,0 +1,201 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(magrittr)
+library(dplyr)
+```
+
+
+```{r}
+data <- read.csv(file = 'cars.csv',sep = ',',header = TRUE)
+head(data)
+```
+
+```{r}
+data$brand <- as.factor(data$brand)
+data$cylinders <- as.factor(data$cylinders)
+head(data)
+```
+```{r}
+#How many observations per Brand 
+ggplot(data,aes(brand,fill = brand))+
+  geom_bar()+
+  scale_fill_hue(c = 40) +
+  theme(legend.position="none")+
+  coord_flip()
+
+```
+```{r}
+#mean
+means <- aggregate(hp ~  brand, data, mean)
+means$hp <- round(means$hp, digits = 0)
+#Horsepower-plot(1.1)
+ggplot(data, aes(x=brand, y=hp, fill=brand)) +
+    geom_boxplot(alpha=0.7)+
+    stat_summary(fun=mean, colour="darkred", geom="point", 
+               shape=18, size=3, show.legend=FALSE) + 
+    geom_text(data = means, aes(label = hp, y = hp + 9))+
+    labs(
+      title = 'Range der Pferdestärken pro Ort',
+      subtitle = paste(" Observationen in Europa: ",
+                        nrow(filter(data,brand == ' Europe.')),
+                        "\n", "Observationen in Japan: ",
+                        nrow(filter(data,brand == " Japan.")),
+                       "\n", "Observationen in US: ",
+                        nrow(filter(data,brand == " US."))),
+        x = "Ort",
+        y = "Anzahl Pferdestärken")+
+  theme(legend.position="none")
+```
+
+
+```{r}
+cars_ps <- data %>%
+  group_by(year, brand) %>%
+  summarise(a_sum=round(mean(hp), digits = 0))
+ggplot(cars_ps,aes(year,a_sum, group = brand , color = brand))+
+  geom_line()+
+  geom_point()+
+    labs(
+      title = 'Pferdestärken im Verlauf der Zeit',
+      subtitle = paste(" Observationen in Europa: ",
+                        nrow(filter(data,brand == ' Europe.')),
+                        "\n", "Observationen in Japan: ",
+                        nrow(filter(data,brand == " Japan.")),
+                       "\n", "Observationen in US: ",
+                        nrow(filter(data,brand == " US."))),
+        x = "Jahr",
+        y = "Anzahl Pferdestärken")+
+  scale_x_continuous(labels=as.character(data$year),breaks=data$year)
+```
+```{r}
+# Zylinder bezogen auf den Verbraucht
+cars_eu <- filter(data, brand == " Europe.")
+ggplot(cars_eu,aes(as.factor(cylinders),mpg))+
+  geom_point(alpha=0.3,color="red")+
+    labs(
+      title = 'Spritverbrauch bezogen auf die Anzahl Zylinder',
+        x = "Verbrauch",
+        y = "Verbrauch miles per gallon")
+```
+
+
+```{r}
+##Zylinder Anzahl
+ggplot(data, aes(x= cylinders,  group=brand)) + 
+    geom_bar(aes(y = ..prop.., fill = factor(..x..)), stat="count") +
+    geom_text(aes( label = scales::percent(..prop..),
+                   y= ..prop.. ), stat= "count", vjust = -.3) +
+    labs(
+      title = 'Unterschiede der Zylinder Anzahl',
+      x = 'Anzahl Zylinder',
+      y = "Prozent") +
+    facet_grid(~brand) +
+    scale_y_continuous(labels = scales::percent)+
+    theme(legend.position="none")
+```
+```{r}
+##Correlation mgg/time to 60
+ggplot(data, aes(mpg,time.to.60, size = cylinders)) + 
+    geom_point()
+
+```
+
+```{r}
+##Correlation mgg/time to 60
+ggplot(data, aes(mpg,time.to.60, shape = cylinders)) + 
+    geom_point()
+```
+```{r}
+##Correlation mgg/time to 60
+ggplot(data, aes(mpg,time.to.60, alpha = cylinders)) + 
+    geom_point(size=3, color="Blue")
+```
+
+```{r}
+#mpg/hp no alpha
+ggplot(data,aes(hp,mpg))+
+  geom_point()
+
+```
+```{r}
+#mpg/hp with alpha
+ggplot(data,aes(hp,mpg))+
+  geom_point(alpha = 0.5)
+```
+```{r}
+## Corr with limit
+ggplot(data,aes(hp,mpg))+
+  geom_point(alpha = 0.5)+
+  xlim(0,300)+
+  ylim(0,50)
+```
+
+```{r}
+## Corr with LM
+ggplot(data,aes(hp,mpg))+
+  geom_point(alpha = 0.5)+
+  xlim(0,300)+
+  ylim(0,50)+
+  geom_smooth(method="lm", col="black", se = F)
+
+```
+
+```{r}
+## Corr with LM
+ggplot(data,aes(hp,mpg))+
+  geom_point(alpha = 0.5)+
+  xlim(0,300)+
+  ylim(0,50)+
+  geom_smooth(method="lm", col="blue")
+
+```
+
+
+```{r}
+##Evaluation Plot
+cars_ps <- data %>%
+  group_by(year, brand) %>%
+  summarise(a_sum=round(mean(hp), digits = 0))
+ggplot(cars_ps,aes(year,a_sum, group = brand, color = brand))+
+  geom_line()+
+  geom_point()+
+    labs(
+      title = 'Pferdestärken im Verlauf der Zeit',
+      subtitle = paste(" Observationen in Europa: ",
+                        nrow(filter(data,brand == ' Europe.')),
+                        "\n", "Observationen in Japan: ",
+                        nrow(filter(data,brand == " Japan.")),
+                       "\n", "Observationen in US: ",
+                        nrow(filter(data,brand == " US."))),
+        x = "Jahr",
+        y = "Anzahl Pferdestärken")+
+  scale_x_continuous(labels=as.character(cars$year),breaks=cars$year)+
+  geom_smooth(method=lm, se = F, size= 0.5)
+```
+```{r}
+##Evaluation plot 2
+ggplot(cars_ps,aes(year,a_sum, group = brand, color = brand))+
+  geom_line()+
+  geom_point()+
+    labs(
+      color = "Region",
+      title = 'Pferdestärken im Verlauf der Zeit',
+      subtitle = paste(" Observationen in Europa: ",
+                        nrow(filter(data,brand == ' Europe.')),
+                        "\n", "Observationen in Japan: ",
+                        nrow(filter(data,brand == " Japan.")),
+                       "\n", "Observationen in US: ",
+                        nrow(filter(data,brand == " US."))),
+        x = "Jahr",
+        y = "Anzahl Pferdestärken")+
+  scale_x_continuous(labels=as.character(cars$year),breaks=cars$year)+
+  scale_y_continuous(breaks = seq(20, 180, by = 30))+
+  geom_smooth(method=lm, se = F, size= 0.5)+
+  scale_colour_brewer(palette = "Set2")
+```
+
